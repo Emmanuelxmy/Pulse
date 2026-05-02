@@ -15,7 +15,7 @@ serve(async (req) => {
     const vapidPublic  = Deno.env.get("VAPID_PUBLIC_KEY")!
     const vapidPrivate = Deno.env.get("VAPID_PRIVATE_KEY")!
 
-    webPush.setVapidDetails("mailto:pulse@app.local", vapidPublic, vapidPrivate)
+    webPush.setVapidDetails("https://pulse-six-azure.vercel.app", vapidPublic, vapidPrivate)
 
     const { subscription, title, body, url, icon } = await req.json()
 
@@ -27,8 +27,11 @@ serve(async (req) => {
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...CORS, "Content-Type": "application/json" },
     })
-  } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+  } catch (e: unknown) {
+    const detail = e && typeof e === "object"
+      ? { message: String((e as {message?:unknown}).message ?? e), statusCode: (e as {statusCode?:unknown}).statusCode, body: (e as {body?:unknown}).body }
+      : { message: String(e) }
+    return new Response(JSON.stringify({ error: detail }), {
       status: 500,
       headers: { ...CORS, "Content-Type": "application/json" },
     })
