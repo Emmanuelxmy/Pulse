@@ -11,36 +11,18 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
+      // injectManifest lets us write a custom SW that handles push events
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       includeAssets: ['favicon.svg', 'icons/*.png'],
-      manifest: false, // we use our own public/manifest.json
-      workbox: {
+      manifest: false,
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
-        cleanupOutdatedCaches: true,
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'supabase-cache',
-              expiration: { maxAgeSeconds: 86400, maxEntries: 50 },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts',
-              expiration: { maxAgeSeconds: 31536000, maxEntries: 20 },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/accounts\.google\.com\/.*/i,
-            handler: 'NetworkOnly',
-          },
-        ],
       },
       devOptions: {
-        enabled: false, // keep dev fast; SW only active in prod build
+        enabled: false,
+        type: 'module',
       },
     }),
   ],

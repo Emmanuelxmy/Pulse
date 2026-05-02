@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Calendar } from 'lucide-react'
+import { Plus, Trash2, Calendar, Bell, BellOff, CheckCircle } from 'lucide-react'
 import { clearAllData, getEntriesByDateRange } from '@/lib/db'
 import { isCalendarConnected, connectCalendar, disconnectCalendar } from '@/lib/calendar'
+import {
+  isPushSupported, getPermissionState, requestPermission,
+  subscribeToPush, getExistingSubscription, unsubscribeFromPush,
+  saveSubscription, sendTestNotification,
+  DEFAULT_NOTIF_PREFS, type NotificationPrefs,
+} from '@/lib/notifications'
 import type { Settings } from '@/types'
 
 interface Props {
@@ -16,7 +22,20 @@ export default function SettingsView({ settings, onUpdate }: Props) {
   const [calConnected, setCalConnected] = useState(false)
   const [calLoading, setCalLoading] = useState(false)
 
+  // Notifications state
+  const [notifSubscribed, setNotifSubscribed] = useState(false)
+  const [notifLoading, setNotifLoading] = useState(false)
+  const [notifTesting, setNotifTesting] = useState(false)
+  const [notifTestMsg, setNotifTestMsg] = useState('')
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>(DEFAULT_NOTIF_PREFS)
+  const notifSupported = isPushSupported()
+  const notifPermission = getPermissionState()
+
   useEffect(() => { setCalConnected(isCalendarConnected()) }, [])
+
+  useEffect(() => {
+    getExistingSubscription().then(sub => setNotifSubscribed(!!sub))
+  }, [])
 
   async function handleConnectCalendar() {
     setCalLoading(true)
@@ -67,6 +86,45 @@ export default function SettingsView({ settings, onUpdate }: Props) {
     if (!newCategory.trim()) return
     onUpdate({ task_categories: [...settings.task_categories, newCategory.trim()] })
     setNewCategory('')
+  }
+
+  async function handleEnableNotifications() {
+    setNotifLoading(true)
+    try {
+      const granted = await requestPermission()
+      if (!granted) { setNotifLoading(false); return }
+      const sub = await subscribeToPush()
+      if (sub) {
+        await saveSubscription(sub, notifPrefs)
+        setNotifSubscribed(true)
+      }
+    } catch { /* ignore */ }
+    setNotifLoading(false)
+  }
+
+  async function handleDisableNotifications() {
+    await unsubscribeFromPush()
+    setNotifSubscribed(false)
+  }
+
+  async function handleUpdatePrefs(patch: Partial<NotificationPrefs>) {
+    const updated = { ...notifPrefs, ...patch }
+    setNotifPrefs(updated)
+    const sub = await getExistingSubscription()
+    if (sub) await saveSubscription(sub, updated)
+  }
+
+  async function handleTestNotification() {
+    setNotifTesting(true)
+    setNotifTestMsg('')
+    try {
+      await sendTestNotification()
+      setNotifTestMsg('Sent! Check for the notification.')
+    } catch (e) {
+      setNotifTestMsg(e instanceof Error ? e.message : 'Failed')
+    }
+    setNotifTesting(false)
+    setTimeout(() => setNotifTestMsg(''), 4000)
   }
 
   function removeCategory(i: number) {
@@ -220,6 +278,115 @@ export default function SettingsView({ settings, onUpdate }: Props) {
               <Calendar size={16} />
               {calLoading ? 'Connecting…' : 'Connect Google Calendar'}
             </button>
+          </div>
+        )}
+      </section>
+
+      {/* Notifications */}
+      <section style={sectionStyle}>
+        <h2 style={sectionTitle}>Notifications</h2>
+
+        {!notifSupported && (
+          <p style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>
+            Push notifications require iOS 16.4+ with Pulse added to your Home Screen, or any modern Android browser.
+          </p>
+        )}
+
+        {notifSupported && !notifSubscribed && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ fontSize: 13, color: '#666', lineHeight: 1.5 }}>
+              Get reminders for your Morning Brief, Evening Brief, and daily habit check.
+            </p>
+            {notifPermission === 'denied' && (
+              <p style={{ fontSize: 12, color: '#EF4444' }}>
+                Notifications blocked — enable them in your browser / iOS Settings.
+              </p>
+            )}
+            <button
+              onClick={handleEnableNotifications}
+              disabled={notifLoading || notifPermission === 'denied'}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                background: 'rgba(0,240,181,0.12)', color: '#00F0B5',
+                border: '1px solid rgba(0,240,181,0.25)', borderRadius: 12,
+                padding: '13px', fontSize: 14, fontWeight: 600,
+                cursor: notifLoading ? 'not-allowed' : 'pointer',
+                opacity: notifLoading ? 0.6 : 1,
+              }}
+            >
+              <Bell size={16} />
+              {notifLoading ? 'Enabling…' : 'Enable Notifications'}
+            </button>
+          </div>
+        )}
+
+        {notifSupported && notifSubscribed && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Status */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <CheckCircle size={15} color="#00F0B5" />
+              <span style={{ fontSize: 14, color: '#00F0B5', fontWeight: 600 }}>Notifications on</span>
+            </div>
+
+            {/* Preference toggles */}
+            {([
+              ['morning', '☀️ Morning Brief (7 AM)'],
+              ['evening', '🌙 Evening Brief (7 PM)'],
+              ['habits',  '✓ Habit reminder (9 PM)'],
+              ['protein', '🥩 Protein check (noon)'],
+            ] as [keyof NotificationPrefs, string][]).map(([key, label]) => (
+              <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 14, color: '#C0C0D0' }}>{label}</span>
+                <button
+                  onClick={() => handleUpdatePrefs({ [key]: !notifPrefs[key] })}
+                  style={{
+                    width: 44, height: 26, borderRadius: 99, border: 'none', cursor: 'pointer',
+                    background: notifPrefs[key] ? '#00F0B5' : 'rgba(255,255,255,0.1)',
+                    position: 'relative', transition: 'background 0.2s',
+                    flexShrink: 0,
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute', top: 3, width: 20, height: 20, borderRadius: '50%',
+                    background: '#fff', transition: 'left 0.2s',
+                    left: notifPrefs[key] ? 21 : 3,
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+                  }} />
+                </button>
+              </div>
+            ))}
+
+            {/* Test + disable */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button
+                onClick={handleTestNotification}
+                disabled={notifTesting}
+                style={{
+                  flex: 1, background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+                  padding: '10px', fontSize: 13, fontWeight: 600, color: '#888',
+                  cursor: 'pointer',
+                }}
+              >
+                {notifTesting ? 'Sending…' : 'Test'}
+              </button>
+              <button
+                onClick={handleDisableNotifications}
+                style={{
+                  flex: 1, background: 'rgba(239,68,68,0.08)',
+                  border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10,
+                  padding: '10px', fontSize: 13, fontWeight: 600, color: '#EF4444',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}
+              >
+                <BellOff size={14} /> Disable
+              </button>
+            </div>
+            {notifTestMsg && (
+              <p style={{ fontSize: 12, color: notifTestMsg.includes('Sent') ? '#00F0B5' : '#EF4444', textAlign: 'center' }}>
+                {notifTestMsg}
+              </p>
+            )}
           </div>
         )}
       </section>
