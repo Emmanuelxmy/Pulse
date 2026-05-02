@@ -10,17 +10,19 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'icons/*.png'],
+      injectRegister: 'auto',
+      includeAssets: ['favicon.svg', 'icons/*.png'],
       manifest: false, // we use our own public/manifest.json
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'supabase-cache',
-              expiration: { maxAgeSeconds: 86400 },
+              expiration: { maxAgeSeconds: 86400, maxEntries: 50 },
             },
           },
           {
@@ -28,10 +30,17 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'google-fonts',
-              expiration: { maxAgeSeconds: 31536000 },
+              expiration: { maxAgeSeconds: 31536000, maxEntries: 20 },
             },
           },
+          {
+            urlPattern: /^https:\/\/accounts\.google\.com\/.*/i,
+            handler: 'NetworkOnly',
+          },
         ],
+      },
+      devOptions: {
+        enabled: false, // keep dev fast; SW only active in prod build
       },
     }),
   ],

@@ -1,7 +1,7 @@
 import type { TaskData } from '@/types'
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string
-const SCOPE = 'https://www.googleapis.com/auth/calendar.events'
+const SCOPE = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly'
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3/calendars/primary/events'
 
 const TOKEN_KEY = 'gcal_token'
@@ -137,4 +137,53 @@ export async function deleteCalendarEvent(eventId: string): Promise<void> {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${stored.access_token}` },
   })
+}
+
+export interface CalendarEvent {
+  id: string
+  summary: string
+  start: string   // "2024-05-03" or "2024-05-03T10:00:00"
+  end: string
+  description?: string
+  location?: string
+}
+
+export async function getUpcomingEvents(days = 7): Promise<CalendarEvent[]> {
+  const stored = getToken()
+  if (!stored) return []
+
+  const now = new Date()
+  const future = new Date()
+  future.setDate(now.getDate() + days)
+
+  const params = new URLSearchParams({
+    timeMin: now.toISOString(),
+    timeMax: future.toISOString(),
+    singleEvents: 'true',
+    orderBy: 'startTime',
+    maxResults: '50',
+  })
+
+  const res = await fetch(`${CALENDAR_API}?${params}`, {
+    headers: { Authorization: `Bearer ${stored.access_token}` },
+  })
+
+  if (!res.ok) return []
+
+  const data = await res.json()
+  return (data.items ?? []).map((item: {
+    id: string
+    summary?: string
+    start?: { date?: string; dateTime?: string }
+    end?: { date?: string; dateTime?: string }
+    description?: string
+    location?: string
+  }) => ({
+    id: item.id,
+    summary: item.summary ?? '(no title)',
+    start: item.start?.dateTime ?? item.start?.date ?? '',
+    end: item.end?.dateTime ?? item.end?.date ?? '',
+    description: item.description,
+    location: item.location,
+  }))
 }
