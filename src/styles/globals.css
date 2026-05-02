@@ -1,19 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0A0A0A;
-  --color-surface: #141414;
-  --color-surface-2: #1E1E1E;
-  --color-border: #2A2A2A;
-  --color-text: #F5F5F5;
-  --color-text-muted: #888888;
+  --color-bg: #080810;
+  --color-surface: rgba(255, 255, 255, 0.04);
+  --color-surface-2: rgba(255, 255, 255, 0.07);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-text: #F0F0F5;
+  --color-text-muted: #58586A;
   --color-teal: #00F0B5;
-  --color-teal-dim: #00F0B520;
+  --color-teal-dim: rgba(0, 240, 181, 0.12);
   --color-amber: #F59E0B;
-  --color-amber-dim: #F59E0B20;
+  --color-amber-dim: rgba(245, 158, 11, 0.12);
   --color-red: #EF4444;
-  --color-red-dim: #EF444420;
+  --color-red-dim: rgba(239, 68, 68, 0.12);
   --color-purple: #A78BFA;
+  --color-blue: #60A5FA;
 
   --font-sans: "DM Sans", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -24,57 +25,83 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html,
-body,
-#root {
+html, body, #root {
   height: 100%;
-  background-color: #0A0A0A;
-  color: #F5F5F5;
+  background: #080810;
+  color: #F0F0F5;
   font-family: "DM Sans", sans-serif;
   overscroll-behavior: none;
 }
 
-/* Safe area padding for iPhone notch/home indicator */
-.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-top    { padding-top: env(safe-area-inset-top); }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 
-/* Slide-up animation for bottom sheets */
+/* ── Glassmorphism ─────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+}
+.glass-elevated {
+  background: rgba(255, 255, 255, 0.065);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+}
+
+/* ── Glows ─────────────────────────────────────── */
+.glow-teal   { box-shadow: 0 4px 40px rgba(0, 240, 181, 0.15); }
+.glow-amber  { box-shadow: 0 4px 40px rgba(245, 158, 11, 0.15); }
+.glow-purple { box-shadow: 0 4px 40px rgba(167, 139, 250, 0.15); }
+.glow-red    { box-shadow: 0 4px 40px rgba(239, 68, 68, 0.15); }
+
+/* ── Animations ────────────────────────────────── */
 @keyframes slide-up {
   from { transform: translateY(100%); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
-
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
-@keyframes count-up {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+@keyframes shimmer {
+  0%, 100% { opacity: 0.45; }
+  50%       { opacity: 0.9; }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes pulse-ring {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
 }
 
-.animate-slide-up  { animation: slide-up 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
-.animate-fade-in   { animation: fade-in 0.2s ease forwards; }
+.animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+.animate-fade-in  { animation: fade-in 0.25s ease forwards; }
+.animate-shimmer  { animation: shimmer 1.8s ease infinite; }
+.animate-spin     { animation: spin 1s linear infinite; }
 
 /* Staggered entry cards */
 .entry-card:nth-child(1) { animation-delay: 0ms; }
-.entry-card:nth-child(2) { animation-delay: 40ms; }
-.entry-card:nth-child(3) { animation-delay: 80ms; }
-.entry-card:nth-child(4) { animation-delay: 120ms; }
-.entry-card:nth-child(5) { animation-delay: 160ms; }
+.entry-card:nth-child(2) { animation-delay: 50ms; }
+.entry-card:nth-child(3) { animation-delay: 100ms; }
+.entry-card:nth-child(4) { animation-delay: 150ms; }
+.entry-card:nth-child(5) { animation-delay: 200ms; }
 
-/* Number font for data */
+/* ── Utilities ─────────────────────────────────── */
 .font-data {
   font-family: "JetBrains Mono", monospace;
   font-feature-settings: "tnum";
 }
 
-/* Scrollbar hidden */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Zone badge colors */
-.zone-badge-z1  { background: #00F0B520; color: #00F0B5; }
-.zone-badge-z2  { background: #F59E0B20; color: #F59E0B; }
-.zone-badge-hit { background: #EF444420; color: #EF4444; }
+/* Zone badges */
+.zone-badge-z1  { background: rgba(0, 240, 181, 0.12); color: #00F0B5; }
+.zone-badge-z2  { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
+.zone-badge-hit { background: rgba(239, 68, 68, 0.12);  color: #EF4444; }

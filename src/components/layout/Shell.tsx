@@ -4,20 +4,24 @@ import BottomNav from './BottomNav'
 export default function Shell({ children }: { children: ReactNode }) {
   return (
     <div
-      className="relative flex flex-col min-h-screen"
-      style={{ background: '#0A0A0A' }}
+      style={{
+        position: 'relative',
+        minHeight: '100dvh',
+        background: '#080810',
+        backgroundImage: 'radial-gradient(ellipse 90% 40% at 50% 0%, rgba(0,240,181,0.05) 0%, transparent 100%)',
+      }}
     >
-      {/* Safe area top padding */}
       <div style={{ paddingTop: 'env(safe-area-inset-top)' }} />
-
-      {/* Page content — leave room for bottom nav */}
       <main
-        className="flex-1 overflow-y-auto no-scrollbar"
-        style={{ paddingBottom: 'calc(60px + env(safe-area-inset-bottom))' }}
+        className="no-scrollbar"
+        style={{
+          overflowY: 'auto',
+          height: 'calc(100dvh - env(safe-area-inset-top))',
+          paddingBottom: 'calc(90px + env(safe-area-inset-bottom))',
+        }}
       >
         {children}
       </main>
-
       <BottomNav />
     </div>
   )

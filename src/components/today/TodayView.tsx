@@ -13,108 +13,102 @@ export default function TodayView({ settings }: { settings: Settings }) {
   const stats = useToday(entries, settings)
   const navigate = useNavigate()
 
-  const circumference = 2 * Math.PI * 52
+  const circumference = 2 * Math.PI * 54
   const offset = circumference - (stats.progress / 100) * circumference
 
-  async function handleAddTraining(data: TrainingData) {
-    await add('training', data)
-  }
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
-  async function handleAddNutrition(data: NutritionData) {
-    await add('nutrition', data)
-  }
-
-  async function handleAddTask(data: TaskData) {
-    await add('task', data)
-  }
-
+  async function handleAddTraining(data: TrainingData) { await add('training', data) }
+  async function handleAddNutrition(data: NutritionData) { await add('nutrition', data) }
+  async function handleAddTask(data: TaskData) { await add('task', data) }
   async function handleToggleHabit(name: string, completed: boolean, existing?: Entry) {
-    if (existing) {
-      await update({ ...existing, data: { habit_name: name, completed } })
-    } else {
-      await add('habit', { habit_name: name, completed })
-    }
+    if (existing) await update({ ...existing, data: { habit_name: name, completed } })
+    else await add('habit', { habit_name: name, completed })
   }
+
+  const proteinPct = Math.min((stats.protein / settings.protein_target_g) * 100, 100)
 
   return (
-    <div className="px-4 pt-6 pb-4">
-      {/* Header */}
-      <div className="mb-6">
-        <p style={{ fontSize: 13, color: '#555', fontWeight: 500, marginBottom: 2 }}>
+    <div style={{ padding: '24px 18px 8px' }}>
+
+      {/* ── Header ── */}
+      <div style={{ marginBottom: 22 }}>
+        <p style={{ fontSize: 13, color: '#44445A', fontWeight: 500, marginBottom: 3 }}>
           {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
         </p>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#F5F5F5', lineHeight: 1.2 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: '#F0F0F5', lineHeight: 1.15 }}>
           {formatDate(today)}
         </h1>
+        <p style={{ fontSize: 14, color: '#44445A', marginTop: 3 }}>{greeting}</p>
       </div>
 
-      {/* Progress Ring + Protein */}
-      <div className="flex items-center gap-5 mb-6">
+      {/* ── Progress card ── */}
+      <div
+        className="glass glow-teal"
+        style={{ padding: '20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 18 }}
+      >
         {/* Ring */}
-        <div className="relative flex-shrink-0" style={{ width: 120, height: 120 }}>
-          <svg width="120" height="120" style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx="60" cy="60" r="52" fill="none" stroke="#1E1E1E" strokeWidth="8" />
+        <div style={{ position: 'relative', flexShrink: 0, width: 128, height: 128 }}>
+          <svg width="128" height="128" style={{ transform: 'rotate(-90deg)' }}>
+            <circle cx="64" cy="64" r="54" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
             <circle
-              cx="60" cy="60" r="52" fill="none"
+              cx="64" cy="64" r="54" fill="none"
               stroke="#00F0B5" strokeWidth="8"
               strokeDasharray={circumference}
               strokeDashoffset={offset}
               strokeLinecap="round"
-              style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+              style={{
+                transition: 'stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1)',
+                filter: 'drop-shadow(0 0 8px rgba(0,240,181,0.5))',
+              }}
             />
           </svg>
           <div style={{
-            position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
+            position: 'absolute', inset: 0,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           }}>
-            <span style={{ fontSize: 26, fontWeight: 700, color: '#F5F5F5', fontFamily: 'JetBrains Mono, monospace' }}>
+            <span className="font-data" style={{ fontSize: 28, fontWeight: 700, color: '#F0F0F5', lineHeight: 1 }}>
               {stats.progress}%
             </span>
-            <span style={{ fontSize: 10, color: '#555', marginTop: -2 }}>done</span>
+            <span style={{ fontSize: 10, color: '#44445A', marginTop: 3, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              done
+            </span>
           </div>
         </div>
 
-        {/* Stats column */}
-        <div className="flex flex-col gap-3 flex-1">
-          {/* Protein bar */}
+        {/* Stats */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Protein */}
           <div>
-            <div className="flex justify-between items-baseline mb-1">
-              <span style={{ fontSize: 12, color: '#888' }}>Protein</span>
-              <span style={{ fontSize: 13, fontFamily: 'JetBrains Mono, monospace', color: '#F5F5F5' }}>
-                <span style={{ color: '#00F0B5' }}>{stats.protein}g</span>
-                <span style={{ color: '#444' }}> / {settings.protein_target_g}g</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+              <span style={{ fontSize: 11, color: '#44445A', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Protein</span>
+              <span className="font-data" style={{ fontSize: 12, color: '#F0F0F5' }}>
+                <span style={{ color: '#00F0B5' }}>{stats.protein}</span>
+                <span style={{ color: '#2A2A3A' }}>/{settings.protein_target_g}g</span>
               </span>
             </div>
-            <div style={{ height: 5, background: '#1E1E1E', borderRadius: 99 }}>
+            <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 99 }}>
               <div style={{
-                height: '100%', borderRadius: 99, background: '#00F0B5',
-                width: `${Math.min((stats.protein / settings.protein_target_g) * 100, 100)}%`,
-                transition: 'width 0.4s ease',
+                height: '100%', borderRadius: 99,
+                background: 'linear-gradient(90deg, #00F0B5, #00D4A0)',
+                width: `${proteinPct}%`,
+                transition: 'width 0.5s ease',
+                boxShadow: proteinPct > 10 ? '0 0 8px rgba(0,240,181,0.4)' : 'none',
               }} />
             </div>
           </div>
 
           {/* Habits */}
-          <div className="flex justify-between">
-            <span style={{ fontSize: 12, color: '#888' }}>Habits</span>
-            <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: '#F5F5F5' }}>
-              {stats.completedHabits}<span style={{ color: '#444' }}>/{stats.totalHabits}</span>
-            </span>
-          </div>
+          <StatRow label="Habits" value={`${stats.completedHabits}/${stats.totalHabits}`} />
 
-          {/* Training */}
-          <div className="flex justify-between">
-            <span style={{ fontSize: 12, color: '#888' }}>Sessions</span>
-            <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: '#F5F5F5' }}>
-              {stats.trainingSessions}
-              <span style={{ color: '#444' }}> today</span>
-            </span>
-          </div>
+          {/* Sessions */}
+          <StatRow label="Sessions" value={`${stats.trainingSessions} today`} />
         </div>
       </div>
 
-      {/* Quick Entry tiles */}
-      <div className="mb-6">
+      {/* ── Quick entry tiles ── */}
+      <div style={{ marginBottom: 20 }}>
         <QuickEntry
           entries={entries}
           settings={settings}
@@ -125,28 +119,50 @@ export default function TodayView({ settings }: { settings: Settings }) {
         />
       </div>
 
-      {/* Today's log */}
-      <div className="mb-4">
-        <h2 style={{ fontSize: 13, color: '#555', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 12 }}>
+      {/* ── Today's log ── */}
+      <div>
+        <p style={{
+          fontSize: 11, color: '#44445A', fontWeight: 700,
+          letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12,
+        }}>
           Today's Log
-        </h2>
+        </p>
         <EntryFeed entries={entries} onUpdate={update} onDelete={remove} />
       </div>
 
-      {/* Floating Ask Coach FAB */}
+      {/* ── Ask Coach FAB ── */}
       <button
         onClick={() => navigate('/coach')}
         style={{
-          position: 'fixed', bottom: 'calc(72px + env(safe-area-inset-bottom))', right: 20,
-          background: '#00F0B5', color: '#0A0A0A', border: 'none', borderRadius: 99,
-          padding: '13px 18px', display: 'flex', alignItems: 'center', gap: 8,
-          fontWeight: 700, fontSize: 14, cursor: 'pointer', boxShadow: '0 4px 20px #00F0B540',
+          position: 'fixed',
+          bottom: 'calc(86px + env(safe-area-inset-bottom))',
+          right: 18,
+          background: 'linear-gradient(135deg, #00F0B5 0%, #00C896 100%)',
+          color: '#080810',
+          border: 'none',
+          borderRadius: 99,
+          padding: '13px 18px',
+          display: 'flex', alignItems: 'center', gap: 7,
+          fontWeight: 700, fontSize: 14,
+          cursor: 'pointer',
+          boxShadow: '0 6px 28px rgba(0,240,181,0.35)',
           zIndex: 40,
         }}
       >
-        <Brain size={18} strokeWidth={2} />
-        Ask Coach
+        <Brain size={17} strokeWidth={2.2} />
+        Coach
       </button>
+    </div>
+  )
+}
+
+function StatRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <span style={{ fontSize: 11, color: '#44445A', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        {label}
+      </span>
+      <span className="font-data" style={{ fontSize: 12, color: '#F0F0F5' }}>{value}</span>
     </div>
   )
 }

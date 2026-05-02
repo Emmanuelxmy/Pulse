@@ -1,22 +1,33 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Brain, BarChart2, Settings } from 'lucide-react'
+import { Home, Brain, CalendarDays, BarChart2, Settings } from 'lucide-react'
 
 const tabs = [
-  { to: '/',          label: 'Today',     Icon: Home },
-  { to: '/coach',     label: 'Coach',     Icon: Brain },
-  { to: '/dashboard', label: 'Dashboard', Icon: BarChart2 },
-  { to: '/settings',  label: 'Settings',  Icon: Settings },
+  { to: '/',          label: 'Today',    Icon: Home },
+  { to: '/coach',     label: 'Coach',    Icon: Brain },
+  { to: '/calendar',  label: 'Calendar', Icon: CalendarDays },
+  { to: '/dashboard', label: 'Stats',    Icon: BarChart2 },
+  { to: '/settings',  label: 'Settings', Icon: Settings },
 ]
 
 export default function BottomNav() {
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around"
+    <div
       style={{
-        background: '#0F0F0F',
-        borderTop: '1px solid #2A2A2A',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-        height: 'calc(60px + env(safe-area-inset-bottom))',
+        position: 'fixed',
+        bottom: 'calc(14px + env(safe-area-inset-bottom))',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        background: 'rgba(12, 12, 18, 0.88)',
+        backdropFilter: 'blur(28px)',
+        WebkitBackdropFilter: 'blur(28px)',
+        border: '1px solid rgba(255,255,255,0.09)',
+        borderRadius: 99,
+        padding: '6px 8px',
+        gap: 2,
+        boxShadow: '0 8px 48px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)',
       }}
     >
       {tabs.map(({ to, label, Icon }) => (
@@ -24,18 +35,35 @@ export default function BottomNav() {
           key={to}
           to={to}
           end={to === '/'}
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 px-4 py-2 transition-colors ${
-              isActive ? 'text-[#00F0B5]' : 'text-[#666]'
-            }`
-          }
+          style={({ isActive }) => ({
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 3,
+            padding: '8px 13px',
+            borderRadius: 99,
+            background: isActive ? 'rgba(0, 240, 181, 0.13)' : 'transparent',
+            color: isActive ? '#00F0B5' : '#44445A',
+            textDecoration: 'none',
+            transition: 'all 0.18s ease',
+            minWidth: 50,
+          })}
         >
-          <Icon size={22} strokeWidth={1.8} />
-          <span style={{ fontSize: 10, fontFamily: 'DM Sans, sans-serif', fontWeight: 500 }}>
-            {label}
-          </span>
+          {({ isActive }) => (
+            <>
+              <Icon size={19} strokeWidth={isActive ? 2.2 : 1.6} />
+              <span style={{
+                fontSize: 9.5,
+                fontWeight: isActive ? 700 : 500,
+                letterSpacing: '0.02em',
+                lineHeight: 1,
+              }}>
+                {label}
+              </span>
+            </>
+          )}
         </NavLink>
       ))}
-    </nav>
+    </div>
   )
 }
