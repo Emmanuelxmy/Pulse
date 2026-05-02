@@ -20,8 +20,23 @@ export interface TrainingData {
 export interface NutritionData {
   meal: MealType
   protein_g: number
+  carbs_g?: number
+  fat_g?: number
+  calories?: number
   quality: QualityType
   notes: string
+  raw_text?: string   // original freeform description
+}
+
+export interface MacroEstimate {
+  foods: string[]
+  protein_g: number
+  carbs_g: number
+  fat_g: number
+  calories: number
+  quality: QualityType
+  meal_type: MealType
+  reasoning: string
 }
 
 export interface TaskData {

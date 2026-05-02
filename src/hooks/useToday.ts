@@ -1,11 +1,14 @@
 import { useMemo } from 'react'
 import { calcDailyProtein, calcZoneSplit } from '@/lib/utils'
-import type { Entry, Settings, HabitData, TaskData } from '@/types'
+import type { Entry, Settings, HabitData, TaskData, NutritionData } from '@/types'
 
 export function useToday(entries: Entry[], settings: Settings) {
   return useMemo(() => {
     const protein = calcDailyProtein(entries)
     const zoneSplit = calcZoneSplit(entries)
+    const totalCalories = entries
+      .filter(e => e.domain === 'nutrition')
+      .reduce((sum, e) => sum + ((e.data as NutritionData).calories ?? 0), 0)
     const trainingSessions = entries.filter(e => e.domain === 'training').length
 
     const habitEntries = entries.filter(e => e.domain === 'habit')
@@ -30,6 +33,7 @@ export function useToday(entries: Entry[], settings: Settings) {
 
     return {
       protein,
+      totalCalories,
       zoneSplit,
       trainingSessions,
       completedHabits: completedHabits.length,

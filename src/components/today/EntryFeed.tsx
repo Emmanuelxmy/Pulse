@@ -120,7 +120,9 @@ function CardContent({ entry, onUpdate }: { entry: Entry; onUpdate: (e: Entry) =
           <span style={titleStyle}>{d.meal.charAt(0).toUpperCase() + d.meal.slice(1)}</span>
           <div style={subStyle}>
             <span style={{ color: '#00F0B5', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{d.protein_g}g</span>
-            {' '}protein · {d.quality}
+            {' '}protein
+            {d.calories ? <span style={{ color: '#A78BFA', fontFamily: 'JetBrains Mono, monospace' }}> · {d.calories}kcal</span> : null}
+            {' · '}{d.quality}
           </div>
         </div>
         <span style={timeStyle}>{formatTime(created_at)}</span>

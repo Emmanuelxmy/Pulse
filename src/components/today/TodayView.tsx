@@ -99,6 +99,11 @@ export default function TodayView({ settings }: { settings: Settings }) {
             </div>
           </div>
 
+          {/* Calories (only shown if any have been logged via AI) */}
+          {stats.totalCalories > 0 && (
+            <StatRow label="Calories" value={`${stats.totalCalories} kcal`} />
+          )}
+
           {/* Habits */}
           <StatRow label="Habits" value={`${stats.completedHabits}/${stats.totalHabits}`} />
 

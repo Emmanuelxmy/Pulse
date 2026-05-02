@@ -4,13 +4,26 @@ import { registerSW } from 'virtual:pwa-register'
 import '@/styles/globals.css'
 import App from './App'
 
-// Register service worker — auto-updates silently in background
-registerSW({
-  onNeedRefresh() {}, // autoUpdate handles this
+// Show a small banner when a new version is available so the installed
+// PWA picks up changes without the user needing to remove + re-add it.
+let swUpdateCb: (() => void) | null = null
+
+const updateSW = registerSW({
+  onNeedRefresh() {
+    swUpdateCb?.()
+  },
   onOfflineReady() {
-    console.log('[Pulse] App ready for offline use')
+    console.log('[Pulse] Ready for offline use')
   },
 })
+
+// Expose so App can wire up the banner
+export function onSwUpdate(cb: () => void) {
+  swUpdateCb = cb
+}
+export function applySwUpdate() {
+  updateSW(true)
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
