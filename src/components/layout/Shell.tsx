@@ -17,7 +17,7 @@ export default function Shell({ children }: { children: ReactNode }) {
         style={{
           overflowY: 'auto',
           height: 'calc(100dvh - env(safe-area-inset-top))',
-          paddingBottom: 'calc(90px + env(safe-area-inset-bottom))',
+          paddingBottom: 'calc(110px + env(safe-area-inset-bottom))',
         }}
       >
         {children}

@@ -1,5 +1,3 @@
-import { useNavigate } from 'react-router-dom'
-import { Brain } from 'lucide-react'
 import { useEntries } from '@/hooks/useEntries'
 import { useToday } from '@/hooks/useToday'
 import { formatDate, getTodayISO } from '@/lib/utils'
@@ -11,7 +9,6 @@ export default function TodayView({ settings }: { settings: Settings }) {
   const today = getTodayISO()
   const { entries, add, update, remove } = useEntries(today)
   const stats = useToday(entries, settings)
-  const navigate = useNavigate()
 
   const circumference = 2 * Math.PI * 54
   const offset = circumference - (stats.progress / 100) * circumference
@@ -135,28 +132,6 @@ export default function TodayView({ settings }: { settings: Settings }) {
         <EntryFeed entries={entries} onUpdate={update} onDelete={remove} />
       </div>
 
-      {/* ── Ask Coach FAB ── */}
-      <button
-        onClick={() => navigate('/coach')}
-        style={{
-          position: 'fixed',
-          bottom: 'calc(86px + env(safe-area-inset-bottom))',
-          right: 18,
-          background: 'linear-gradient(135deg, #00F0B5 0%, #00C896 100%)',
-          color: '#080810',
-          border: 'none',
-          borderRadius: 99,
-          padding: '13px 18px',
-          display: 'flex', alignItems: 'center', gap: 7,
-          fontWeight: 700, fontSize: 14,
-          cursor: 'pointer',
-          boxShadow: '0 6px 28px rgba(0,240,181,0.35)',
-          zIndex: 40,
-        }}
-      >
-        <Brain size={17} strokeWidth={2.2} />
-        Coach
-      </button>
     </div>
   )
 }
