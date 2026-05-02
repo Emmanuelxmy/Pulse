@@ -46,8 +46,9 @@ export default function NutritionEntry({ onSave }: Props) {
       setFat(result.fat_g)
       setCalories(result.calories)
       setQuality(result.quality)
-    } catch {
-      setAiError('Could not estimate — check your connection or try again.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setAiError(msg || 'Could not estimate — try again.')
     }
     setEstimating(false)
   }
