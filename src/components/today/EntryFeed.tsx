@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Dumbbell, Drumstick, CheckSquare, RotateCcw, Check } from 'lucide-react'
+import { Dumbbell, Drumstick, RotateCcw, Check } from 'lucide-react'
 import { formatTime } from '@/lib/utils'
 import type { Entry, TrainingData, NutritionData, TaskData, HabitData } from '@/types'
 

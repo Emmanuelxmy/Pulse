@@ -5,7 +5,7 @@ import TrainingEntry from './TrainingEntry'
 import NutritionEntry from './NutritionEntry'
 import TaskEntry from './TaskEntry'
 import HabitChecklist from './HabitChecklist'
-import type { Entry, Settings, TrainingData, NutritionData, TaskData, HabitData } from '@/types'
+import type { Entry, Settings, TrainingData, NutritionData, TaskData } from '@/types'
 
 const TILES = [
   { id: 'training',  label: 'Training',  Icon: Dumbbell,    color: '#00F0B5', title: 'Log Training' },
