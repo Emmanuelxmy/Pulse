@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
-import { clearAllData } from '@/lib/db'
-import { getEntriesByDateRange } from '@/lib/db'
+import { useState, useEffect } from 'react'
+import { Plus, Trash2, Calendar } from 'lucide-react'
+import { clearAllData, getEntriesByDateRange } from '@/lib/db'
+import { isCalendarConnected, connectCalendar, disconnectCalendar } from '@/lib/calendar'
 import type { Settings } from '@/types'
 
 interface Props {
@@ -13,6 +13,26 @@ export default function SettingsView({ settings, onUpdate }: Props) {
   const [confirmClear, setConfirmClear] = useState(false)
   const [newHabit, setNewHabit] = useState('')
   const [newCategory, setNewCategory] = useState('')
+  const [calConnected, setCalConnected] = useState(false)
+  const [calLoading, setCalLoading] = useState(false)
+
+  useEffect(() => { setCalConnected(isCalendarConnected()) }, [])
+
+  async function handleConnectCalendar() {
+    setCalLoading(true)
+    try {
+      await connectCalendar()
+      setCalConnected(true)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to connect')
+    }
+    setCalLoading(false)
+  }
+
+  function handleDisconnectCalendar() {
+    disconnectCalendar()
+    setCalConnected(false)
+  }
 
   async function handleExport() {
     const data = await getEntriesByDateRange('2000-01-01', '2099-12-31')
@@ -166,6 +186,42 @@ export default function SettingsView({ settings, onUpdate }: Props) {
             </button>
           </div>
         </div>
+      </section>
+
+      {/* Google Calendar */}
+      <section style={sectionStyle}>
+        <h2 style={sectionTitle}>Google Calendar</h2>
+        {calConnected ? (
+          <div className="flex flex-col gap-3">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Calendar size={16} color="#4285F4" />
+              <span style={{ fontSize: 14, color: '#4285F4', fontWeight: 500 }}>Connected</span>
+              <span style={{ fontSize: 12, color: '#444', marginLeft: 'auto' }}>Tasks sync automatically</span>
+            </div>
+            <button onClick={handleDisconnectCalendar} style={actionBtn('#1E0A0A', '#EF4444')}>
+              Disconnect Google Calendar
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <p style={{ fontSize: 13, color: '#666', lineHeight: 1.5 }}>
+              Connect to automatically add tasks to your Google Calendar when you create them.
+            </p>
+            <button
+              onClick={handleConnectCalendar}
+              disabled={calLoading}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                background: '#4285F4', color: '#fff', border: 'none', borderRadius: 10,
+                padding: '13px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                opacity: calLoading ? 0.6 : 1,
+              }}
+            >
+              <Calendar size={16} />
+              {calLoading ? 'Connecting…' : 'Connect Google Calendar'}
+            </button>
+          </div>
+        )}
       </section>
 
       {/* Data */}

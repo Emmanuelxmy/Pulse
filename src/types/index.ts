@@ -29,6 +29,7 @@ export interface TaskData {
   description: string
   completed: boolean
   priority: PriorityType
+  gcal_event_id?: string
 }
 
 export interface HabitData {

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
-import { Dumbbell, Drumstick, RotateCcw, Check } from 'lucide-react'
-import { formatTime } from '@/lib/utils'
+import { Dumbbell, Drumstick, RotateCcw, Check, Calendar } from 'lucide-react'
+import { formatTime, getTodayISO } from '@/lib/utils'
+import { updateCalendarEvent } from '@/lib/calendar'
 import type { Entry, TrainingData, NutritionData, TaskData, HabitData } from '@/types'
 
 interface Props {
@@ -137,10 +138,20 @@ function CardContent({ entry, onUpdate }: { entry: Entry; onUpdate: (e: Entry) =
 
   if (domain === 'task') {
     const d = data as TaskData
+
+    function handleToggle() {
+      const updated = { ...entry, data: { ...d, completed: !d.completed } }
+      onUpdate(updated)
+      // Sync completion state to Google Calendar
+      if (d.gcal_event_id) {
+        updateCalendarEvent(d.gcal_event_id, { ...d, completed: !d.completed }, entry.date ?? getTodayISO()).catch(() => {})
+      }
+    }
+
     return (
       <div style={cardStyle}>
         <button
-          onClick={() => onUpdate({ ...entry, data: { ...d, completed: !d.completed } })}
+          onClick={handleToggle}
           style={{
             width: 26, height: 26, borderRadius: 8, flexShrink: 0, border: 'none',
             background: d.completed ? '#00F0B5' : '#2A2A2A', cursor: 'pointer',
@@ -153,7 +164,10 @@ function CardContent({ entry, onUpdate }: { entry: Entry; onUpdate: (e: Entry) =
           <span style={{ ...cardTitle, textDecoration: d.completed ? 'line-through' : 'none', color: d.completed ? '#555' : '#F5F5F5' }}>
             {d.description}
           </span>
-          <div style={cardSub}>{d.category} · {d.priority}</div>
+          <div style={{ ...cardSub, display: 'flex', alignItems: 'center', gap: 6 }}>
+            {d.category} · {d.priority}
+            {d.gcal_event_id && <Calendar size={11} color="#4285F4" />}
+          </div>
         </div>
         <span style={timeStyle}>{formatTime(created_at)}</span>
       </div>

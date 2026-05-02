@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Calendar } from 'lucide-react'
+import { isCalendarConnected, createCalendarEvent } from '@/lib/calendar'
+import { getTodayISO } from '@/lib/utils'
 import type { TaskData, PriorityType, Settings } from '@/types'
 
 const PRIORITY: PriorityType[] = ['high', 'medium', 'low']
@@ -12,10 +15,33 @@ export default function TaskEntry({ settings, onSave }: Props) {
   const [category, setCategory] = useState(settings.task_categories[0] ?? 'Katalyst')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<PriorityType>('medium')
+  const [syncCal, setSyncCal] = useState(false)
+  const [calConnected, setCalConnected] = useState(false)
+  const [syncing, setSyncing] = useState(false)
 
-  function handleSave() {
+  useEffect(() => {
+    setCalConnected(isCalendarConnected())
+  }, [])
+
+  async function handleSave() {
     if (!description.trim()) return
-    onSave({ category, description: description.trim(), completed: false, priority })
+    const taskData: TaskData = {
+      category,
+      description: description.trim(),
+      completed: false,
+      priority,
+    }
+
+    if (syncCal && calConnected) {
+      setSyncing(true)
+      try {
+        const eventId = await createCalendarEvent(taskData, getTodayISO())
+        taskData.gcal_event_id = eventId
+      } catch {}
+      setSyncing(false)
+    }
+
+    onSave(taskData)
   }
 
   return (
@@ -58,7 +84,38 @@ export default function TaskEntry({ settings, onSave }: Props) {
         </div>
       </div>
 
-      <button onClick={handleSave} style={saveStyle}>Add Task</button>
+      {/* Calendar sync toggle — only shown if connected */}
+      {calConnected && (
+        <button
+          onClick={() => setSyncCal(s => !s)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: syncCal ? '#4285F420' : '#1A1A1A',
+            border: `1px solid ${syncCal ? '#4285F440' : '#2A2A2A'}`,
+            borderRadius: 10, padding: '12px 14px', cursor: 'pointer',
+          }}
+        >
+          <Calendar size={16} color={syncCal ? '#4285F4' : '#555'} />
+          <span style={{ fontSize: 14, color: syncCal ? '#4285F4' : '#555', fontWeight: 500 }}>
+            Add to Google Calendar
+          </span>
+          <div style={{
+            marginLeft: 'auto', width: 36, height: 20, borderRadius: 99,
+            background: syncCal ? '#4285F4' : '#2A2A2A', position: 'relative',
+            transition: 'background 0.2s',
+          }}>
+            <div style={{
+              position: 'absolute', top: 3, left: syncCal ? 18 : 3,
+              width: 14, height: 14, borderRadius: '50%', background: '#fff',
+              transition: 'left 0.2s',
+            }} />
+          </div>
+        </button>
+      )}
+
+      <button onClick={handleSave} disabled={syncing} style={saveStyle}>
+        {syncing ? 'Adding to Calendar…' : 'Add Task'}
+      </button>
     </div>
   )
 }
