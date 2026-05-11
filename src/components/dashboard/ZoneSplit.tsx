@@ -1,71 +1,106 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import type { ZoneSplit as ZoneSplitData } from '@/lib/utils'
 
-const COLORS = { zone1: '#00F0B5', zone2: '#F59E0B', hit: '#EF4444' }
+const ZONES = [
+  { key: 'zone1_min' as const, label: 'Z1', color: '#FF8080' },
+  { key: 'zone2_min' as const, label: 'Z2', color: '#FF3B30' },
+  { key: 'hit_min'   as const, label: 'HIT', color: '#EF4444' },
+]
+
+const SIZE = 132, R = 50, SW = 14
+const C = 2 * Math.PI * R
 
 export default function ZoneSplit({ data }: { data: ZoneSplitData }) {
-  const { zone1_min, zone2_min, hit_min, total_min } = data
+  const { total_min } = data
 
   if (total_min === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '24px 0' }}>
-        <p style={{ color: '#444', fontSize: 14 }}>No training this week</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* Placeholder ring */}
+        <div style={{ position: 'relative', width: SIZE, height: SIZE, flexShrink: 0 }}>
+          <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)' }}>
+            <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={SW} />
+          </svg>
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span className="font-data" style={{ fontSize: 16, fontWeight: 700, color: '#2A2A38', lineHeight: 1 }}>—</span>
+            <span style={{ fontSize: 9.5, color: '#44445A', marginTop: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>cardio</span>
+          </div>
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={eyebrow}>Zone split</p>
+          <p style={{ fontSize: 13, color: '#33334A' }}>No cardio this week</p>
+        </div>
       </div>
     )
   }
 
-  const chartData = [
-    { name: 'Zone 1', value: zone1_min, color: COLORS.zone1 },
-    { name: 'Zone 2', value: zone2_min, color: COLORS.zone2 },
-    { name: 'HIT',    value: hit_min,   color: COLORS.hit },
-  ].filter(d => d.value > 0)
-
-  const z1Pct = Math.round((zone1_min / total_min) * 100)
-  const hitPct = Math.round((hit_min / total_min) * 100)
+  // Build donut segments — accumulate offset
+  let acc = 0
+  const segments = ZONES.map(z => {
+    const min = data[z.key]
+    if (min === 0) return null
+    const dash   = (min / total_min) * C
+    const offset = -acc
+    acc += dash
+    return { ...z, min, pct: Math.round((min / total_min) * 100), dash, offset }
+  }).filter(Boolean) as { label: string; color: string; min: number; pct: number; dash: number; offset: number }[]
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <h3 style={{ fontSize: 13, color: '#888', fontWeight: 600 }}>Zone Split</h3>
-        <span style={{ fontSize: 11, color: '#444' }}>target 80/20</span>
-      </div>
-      <div className="flex items-center gap-4">
-        <ResponsiveContainer width={120} height={120}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%" cy="50%"
-              innerRadius={34} outerRadius={54}
-              dataKey="value"
-              strokeWidth={0}
-            >
-              {chartData.map((entry, i) => (
-                <Cell key={i} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(v) => `${v}min`}
-              contentStyle={{ background: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: 8, fontSize: 12 }}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      {/* Donut */}
+      <div style={{ position: 'relative', width: SIZE, height: SIZE, flexShrink: 0 }}>
+        <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx={SIZE/2} cy={SIZE/2} r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={SW} />
+          {segments.map((seg, i) => (
+            <circle key={i}
+              cx={SIZE/2} cy={SIZE/2} r={R} fill="none"
+              stroke={seg.color} strokeWidth={SW}
+              strokeDasharray={`${seg.dash} ${C - seg.dash}`}
+              strokeDashoffset={seg.offset}
+              style={{ filter: `drop-shadow(0 0 4px ${seg.color}66)` }}
             />
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="flex flex-col gap-2">
-          {[
-            { label: 'Zone 1', min: zone1_min, pct: z1Pct, color: COLORS.zone1, target: '80%' },
-            { label: 'Zone 2', min: zone2_min, pct: zone2_min ? Math.round((zone2_min / total_min)*100) : 0, color: COLORS.zone2, target: '0%' },
-            { label: 'HIT',    min: hit_min,   pct: hitPct, color: COLORS.hit, target: '20%' },
-          ].map(({ label, min, pct, color, target }) => (
-            <div key={label} className="flex items-center gap-2">
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: '#888', width: 52 }}>{label}</span>
-              <span style={{ fontSize: 13, fontFamily: 'JetBrains Mono, monospace', color: '#F5F5F5', width: 36 }}>
+          ))}
+        </svg>
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span className="font-data" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1 }}>
+            {total_min}<span style={{ fontSize: 11, color: '#44445A', fontWeight: 500 }}> m</span>
+          </span>
+          <span style={{ fontSize: 9.5, color: '#44445A', marginTop: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            cardio
+          </span>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <p style={eyebrow}>Zone split</p>
+        {ZONES.map(z => {
+          const min = data[z.key]
+          const pct = Math.round((min / total_min) * 100)
+          return (
+            <div key={z.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: z.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11.5, color: '#F0F0F5', fontWeight: 500, flex: 1 }}>{z.label}</span>
+              <span className="font-data" style={{ fontSize: 11.5, color: '#F0F0F5' }}>
+                {min}<span style={{ color: '#44445A' }}>m</span>
+              </span>
+              <span className="font-data" style={{ fontSize: 10.5, color: '#44445A', width: 34, textAlign: 'right' }}>
                 {pct}%
               </span>
-              <span style={{ fontSize: 11, color: '#444' }}>({min}m · {target})</span>
             </div>
-          ))}
-        </div>
+          )
+        })}
       </div>
     </div>
   )
+}
+
+const eyebrow: React.CSSProperties = {
+  fontSize: 10.5, color: '#44445A', fontWeight: 700,
+  letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 0,
 }

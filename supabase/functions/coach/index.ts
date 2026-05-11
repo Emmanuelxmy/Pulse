@@ -5,24 +5,25 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
-const SYSTEM_PROMPT = `You are a direct, no-BS personal coach for a 17-year-old competitive cross-country skier in off-season training.
+const SYSTEM_PROMPT = `You are a direct, no-BS personal fitness coach. You help athletes optimize their training, nutrition, and strength work.
 
-Key facts about the athlete:
-- Polarized training: 80% Zone 1 (HR < 152 bpm), 20% high intensity (HR > 165 bpm). Avoid Zone 2 (152–165).
-- Max HR: 190 bpm. Resting HR: 42 bpm.
-- Currently in Phase 1: 3 sessions/week target. Phase 2 (June) targets 4–5/week.
-- Daily protein target: 140g with carb cycling.
-- Must do lower back and shoulder prehab daily.
-- Running a startup (Katalyst) and preparing for college in August.
+Context about the athlete will be provided (body stats, goals, recent training, nutrition, and strength data). Use this data to give specific, data-driven recommendations.
 
-Your job: give specific, data-driven recommendations for right now, training, nutrition, and tonight. Be brief and direct. No fluff. Use the actual numbers from their data. If they're behind, say so clearly. If they're on track, acknowledge briefly and move on.
+Key principles:
+- Polarized training: 80% Zone 1, 20% high intensity. Avoid Zone 2 when possible.
+- Track progressive overload for strength exercises.
+- Factor in the athlete's body stats (height, weight, age) for proportional recommendations.
+- Reference their active goals and progress toward them.
+- Account for timing — morning briefs should focus on the day ahead, evening briefs on recovery and tomorrow's plan.
+
+Your job: give specific, actionable recommendations for right now. Be brief and direct. No fluff. Use the actual numbers from their data. If they're behind on goals, say so clearly. If they're on track, acknowledge briefly and move on.
 
 IMPORTANT: Respond ONLY with valid JSON in this exact shape:
 {
-  "summary": "2–3 sentence overall assessment",
+  "summary": "2-3 sentence overall assessment",
   "recommendations": [
     {
-      "category": "training" | "nutrition" | "habit" | "task",
+      "category": "training" | "nutrition" | "strength" | "goal",
       "priority": "high" | "medium" | "low",
       "action": "specific thing to do",
       "reasoning": "why, with data"
@@ -36,15 +37,27 @@ serve(async (req) => {
   }
 
   try {
-    const { today_entries, week_entries, settings, session } = await req.json()
+    const { today_entries, week_entries, strength_entries, goals, body_stats, settings, session } = await req.json()
 
-    const userContent = `Session: ${session === "morning" ? "Morning brief" : "Evening brief"}
+    let userContent = `Session: ${session === "morning" ? "Morning brief" : "Evening brief"}
 
 Today's entries: ${JSON.stringify(today_entries, null, 2)}
 
 This week's entries: ${JSON.stringify(week_entries, null, 2)}
 
 Current settings: ${JSON.stringify(settings, null, 2)}`
+
+    if (strength_entries && strength_entries.length > 0) {
+      userContent += `\n\nRecent strength sessions (last 14 days): ${JSON.stringify(strength_entries, null, 2)}`
+    }
+
+    if (goals && goals.length > 0) {
+      userContent += `\n\nActive goals: ${JSON.stringify(goals, null, 2)}`
+    }
+
+    if (body_stats) {
+      userContent += `\n\nBody stats: ${JSON.stringify(body_stats, null, 2)}`
+    }
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -54,7 +67,7 @@ Current settings: ${JSON.stringify(settings, null, 2)}`
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-3-5-haiku-20241022",
         max_tokens: 1024,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userContent }],
@@ -72,12 +85,10 @@ Current settings: ${JSON.stringify(settings, null, 2)}`
     const data = await res.json()
     const text: string = data.content[0].text
 
-    // Parse and validate JSON response
     let recommendations
     try {
       recommendations = JSON.parse(text)
     } catch {
-      // If Claude returned markdown-wrapped JSON, strip it
       const match = text.match(/```(?:json)?\s*([\s\S]*?)```/)
       recommendations = JSON.parse(match ? match[1] : text)
     }

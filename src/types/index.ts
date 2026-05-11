@@ -1,11 +1,11 @@
-export type DomainType = 'training' | 'nutrition' | 'task' | 'habit'
+export type DomainType = 'training' | 'nutrition' | 'strength'
 export type ZoneType = 'zone1' | 'zone2' | 'hit'
 export type TrainingType = 'skierg' | 'run' | 'bike' | 'strength' | 'intervals' | 'other'
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 export type QualityType = 'high' | 'moderate' | 'low'
-export type PriorityType = 'high' | 'medium' | 'low'
 export type PhaseType = 'phase1' | 'phase2'
 export type CoachSession = 'morning' | 'night'
+export type GoalCategory = 'strength' | 'nutrition' | 'cardio'
 
 export interface TrainingData {
   type: TrainingType
@@ -25,7 +25,7 @@ export interface NutritionData {
   calories?: number
   quality: QualityType
   notes: string
-  raw_text?: string   // original freeform description
+  raw_text?: string
 }
 
 export interface MacroEstimate {
@@ -39,32 +39,58 @@ export interface MacroEstimate {
   reasoning: string
 }
 
-export interface TaskData {
-  category: string
+export interface StrengthExercise {
+  name: string
+  sets: number
+  reps: number
+  weight_lbs: number
+  notes?: string
+}
+
+export interface StrengthData {
+  exercises: StrengthExercise[]
+  raw_text: string
+  progression_notes?: string
+  session_notes?: string
+}
+
+export interface StrengthParseResult {
+  exercises: StrengthExercise[]
+  progression: string
+}
+
+export interface Goal {
+  id: string
+  category: GoalCategory
   description: string
-  completed: boolean
-  priority: PriorityType
-  gcal_event_id?: string
+  target_value: number
+  target_unit: string
+  current_value: number
+  target_date?: string
+  created_at: string
+  exercise_name?: string
 }
 
-export interface HabitData {
-  habit_name: string
-  completed: boolean
+export interface BodyStats {
+  height_cm?: number
+  weight_kg?: number
+  age: number
+  sex: 'male' | 'female'
 }
 
-export type EntryData = TrainingData | NutritionData | TaskData | HabitData
+export type EntryData = TrainingData | NutritionData | StrengthData
 
 export interface Entry {
   id: string
   created_at: string
-  date: string          // ISO date "YYYY-MM-DD"
+  date: string
   domain: DomainType
   data: EntryData
   synced: boolean
 }
 
 export interface Recommendation {
-  category: 'training' | 'nutrition' | 'habit' | 'task'
+  category: 'training' | 'nutrition' | 'strength' | 'goal'
   priority: 'high' | 'medium' | 'low'
   action: string
   reasoning: string
@@ -76,9 +102,9 @@ export interface CoachResponse {
 }
 
 export interface CoachCacheEntry {
-  key: string           // "YYYY-MM-DD_morning" | "YYYY-MM-DD_night"
+  key: string
   response: CoachResponse
-  cachedAt: number      // Date.now()
+  cachedAt: number
 }
 
 export interface Settings {
@@ -91,8 +117,8 @@ export interface Settings {
   training_phase: PhaseType
   sessions_per_week_target: number
   polarized_ratio: [number, number]
-  habits: string[]
-  task_categories: string[]
+  goals: Goal[]
+  body_stats: BodyStats
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -105,12 +131,6 @@ export const DEFAULT_SETTINGS: Settings = {
   training_phase: 'phase1',
   sessions_per_week_target: 3,
   polarized_ratio: [80, 20],
-  habits: [
-    'Lower back prehab',
-    'Shoulder prehab',
-    'Bed by 10:30pm',
-    'No phone first 30min',
-    'Read 20min',
-  ],
-  task_categories: ['Katalyst', 'School prep', 'Life admin'],
+  goals: [],
+  body_stats: { age: 17, sex: 'male' },
 }

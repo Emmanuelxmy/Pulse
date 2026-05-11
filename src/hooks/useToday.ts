@@ -1,45 +1,32 @@
 import { useMemo } from 'react'
-import { calcDailyProtein, calcZoneSplit } from '@/lib/utils'
-import type { Entry, Settings, HabitData, TaskData, NutritionData } from '@/types'
+import { calcDailyProtein } from '@/lib/utils'
+import type { Entry, Settings, NutritionData, StrengthData } from '@/types'
 
 export function useToday(entries: Entry[], settings: Settings) {
   return useMemo(() => {
     const protein = calcDailyProtein(entries)
-    const zoneSplit = calcZoneSplit(entries)
     const totalCalories = entries
       .filter(e => e.domain === 'nutrition')
       .reduce((sum, e) => sum + ((e.data as NutritionData).calories ?? 0), 0)
     const trainingSessions = entries.filter(e => e.domain === 'training').length
+    const strengthSessions = entries.filter(e => e.domain === 'strength').length
+    const strengthSets = entries
+      .filter(e => e.domain === 'strength')
+      .reduce((sum, e) => sum + (e.data as StrengthData).exercises.reduce((s, ex) => s + ex.sets, 0), 0)
 
-    const habitEntries = entries.filter(e => e.domain === 'habit')
-    const completedHabits = habitEntries.filter(e => (e.data as HabitData).completed)
-    const totalHabits = settings.habits.length
-
-    const taskEntries = entries.filter(e => e.domain === 'task')
-    const completedTasks = taskEntries.filter(e => (e.data as TaskData).completed).length
-
-    // Progress: weight each category equally
     const scores: number[] = []
-    // Training: did at least 1 session? (simple daily check)
     scores.push(trainingSessions > 0 ? 1 : 0)
-    // Protein: hit target?
-    scores.push(totalHabits > 0 ? Math.min(protein / settings.protein_target_g, 1) : 0)
-    // Habits: fraction done
-    scores.push(totalHabits > 0 ? completedHabits.length / totalHabits : 0)
-    // Tasks: fraction done (or 1 if none added)
-    scores.push(taskEntries.length > 0 ? completedTasks / taskEntries.length : 0)
+    scores.push(Math.min(protein / settings.protein_target_g, 1))
+    scores.push(strengthSessions > 0 ? 1 : 0)
 
     const progress = Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100)
 
     return {
       protein,
       totalCalories,
-      zoneSplit,
       trainingSessions,
-      completedHabits: completedHabits.length,
-      totalHabits,
-      completedTasks,
-      totalTasks: taskEntries.length,
+      strengthSessions,
+      strengthSets,
       progress,
     }
   }, [entries, settings])

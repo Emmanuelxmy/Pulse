@@ -1,5 +1,3 @@
-import type { TaskData } from '@/types'
-
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string
 const SCOPE = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly'
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3/calendars/primary/events'
@@ -80,53 +78,6 @@ export function disconnectCalendar(): void {
   }
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(TOKEN_EXPIRY_KEY)
-}
-
-function taskToEvent(task: TaskData, date: string) {
-  return {
-    summary: task.description,
-    description: `[${task.category}] · Priority: ${task.priority} · via Pulse`,
-    start: { date },
-    end:   { date },
-    colorId: task.priority === 'high' ? '11' : task.priority === 'medium' ? '5' : '8',
-  }
-}
-
-export async function createCalendarEvent(task: TaskData, date: string): Promise<string> {
-  const stored = getToken()
-  if (!stored) throw new Error('Not connected to Google Calendar')
-
-  const res = await fetch(CALENDAR_API, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${stored.access_token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(taskToEvent(task, date)),
-  })
-
-  if (!res.ok) throw new Error(`Calendar API error: ${res.status}`)
-  const data = await res.json()
-  return data.id as string
-}
-
-export async function updateCalendarEvent(eventId: string, task: TaskData, date: string): Promise<void> {
-  const stored = getToken()
-  if (!stored) return
-
-  const event = {
-    ...taskToEvent(task, date),
-    status: task.completed ? 'cancelled' : 'confirmed',
-  }
-
-  await fetch(`${CALENDAR_API}/${eventId}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${stored.access_token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(event),
-  })
 }
 
 export async function deleteCalendarEvent(eventId: string): Promise<void> {

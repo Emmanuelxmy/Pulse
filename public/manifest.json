@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Pulse",
-  "short_name": "Pulse",
-  "description": "Personal life command center — training, nutrition, tasks, habits.",
+  "name": "Coach",
+  "short_name": "Coach",
+  "description": "AI-powered fitness tracker — training, nutrition, strength, goals.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,7 +10,7 @@
   "background_color": "#0A0A0A",
   "theme_color": "#0A0A0A",
   "orientation": "portrait-primary",
-  "categories": ["health", "fitness", "productivity"],
+  "categories": ["health", "fitness"],
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

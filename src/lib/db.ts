@@ -1,8 +1,8 @@
 import { openDB, type IDBPDatabase } from 'idb'
-import type { Entry, CoachCacheEntry, Settings } from '@/types'
+import type { Entry, CoachCacheEntry, Settings, DomainType } from '@/types'
 
-const DB_NAME = 'pulse-db'
-const DB_VERSION = 1
+const DB_NAME = 'coach-db'
+const DB_VERSION = 2
 
 type PulseDB = {
   entries: {
@@ -26,12 +26,17 @@ async function getDB(): Promise<IDBPDatabase<PulseDB>> {
   if (_db) return _db
   _db = await openDB<PulseDB>(DB_NAME, DB_VERSION, {
     upgrade(db) {
-      const entries = db.createObjectStore('entries', { keyPath: 'id' })
-      entries.createIndex('by-date', 'date')
-      entries.createIndex('by-domain-date', ['domain', 'date'])
-
-      db.createObjectStore('coach_cache', { keyPath: 'key' })
-      db.createObjectStore('settings_cache', { keyPath: 'key' })
+      if (!db.objectStoreNames.contains('entries')) {
+        const entries = db.createObjectStore('entries', { keyPath: 'id' })
+        entries.createIndex('by-date', 'date')
+        entries.createIndex('by-domain-date', ['domain', 'date'])
+      }
+      if (!db.objectStoreNames.contains('coach_cache')) {
+        db.createObjectStore('coach_cache', { keyPath: 'key' })
+      }
+      if (!db.objectStoreNames.contains('settings_cache')) {
+        db.createObjectStore('settings_cache', { keyPath: 'key' })
+      }
     },
   })
   return _db
@@ -97,6 +102,14 @@ export async function getSettings(): Promise<Settings | null> {
 export async function saveSettings(data: Settings): Promise<void> {
   const db = await getDB()
   await db.put('settings_cache', { key: 'settings', data })
+}
+
+export async function getEntriesByDomainAndDateRange(
+  domain: DomainType, start: string, end: string,
+): Promise<Entry[]> {
+  const db = await getDB()
+  const all = await db.getAll('entries')
+  return all.filter(e => e.domain === domain && e.date >= start && e.date <= end)
 }
 
 export async function clearAllData(): Promise<void> {

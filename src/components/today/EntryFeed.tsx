@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react'
-import { Dumbbell, Drumstick, RotateCcw, Check, Calendar } from 'lucide-react'
-import { formatTime, getTodayISO } from '@/lib/utils'
-import { updateCalendarEvent } from '@/lib/calendar'
-import type { Entry, TrainingData, NutritionData, TaskData, HabitData } from '@/types'
+import { Flame, Leaf, Dumbbell } from 'lucide-react'
+import { formatTime } from '@/lib/utils'
+import type { Entry, TrainingData, NutritionData, StrengthData } from '@/types'
 
 interface Props {
   entries: Entry[]
@@ -10,10 +9,10 @@ interface Props {
   onDelete: (id: string) => void
 }
 
-export default function EntryFeed({ entries, onUpdate, onDelete }: Props) {
+export default function EntryFeed({ entries, onDelete }: Props) {
   if (!entries.length) {
     return (
-      <div style={{ textAlign: 'center', padding: '32px 0', color: '#33334A', fontSize: 14 }}>
+      <div style={{ textAlign: 'center', padding: '32px 0', color: '#2A2A38', fontSize: 14 }}>
         Nothing logged yet — tap a tile to start
       </div>
     )
@@ -22,15 +21,13 @@ export default function EntryFeed({ entries, onUpdate, onDelete }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {entries.map((entry, i) => (
-        <EntryCard key={entry.id} entry={entry} index={i} onUpdate={onUpdate} onDelete={onDelete} />
+        <EntryCard key={entry.id} entry={entry} index={i} onDelete={onDelete} />
       ))}
     </div>
   )
 }
 
-function EntryCard({
-  entry, index, onUpdate, onDelete,
-}: { entry: Entry; index: number; onUpdate: (e: Entry) => void; onDelete: (id: string) => void }) {
+function EntryCard({ entry, index, onDelete }: { entry: Entry; index: number; onDelete: (id: string) => void }) {
   const [swipeX, setSwipeX] = useState(0)
   const [deleting, setDeleting] = useState(false)
   const startX = useRef(0)
@@ -47,19 +44,16 @@ function EntryCard({
 
   if (deleting) {
     return (
-      <div
-        className="entry-card animate-fade-in"
-        style={{
-          ...cardStyle, justifyContent: 'space-between',
-          background: 'rgba(239,68,68,0.07)',
-          border: '1px solid rgba(239,68,68,0.18)',
-          animationDelay: `${index * 50}ms`,
-        }}
-      >
+      <div style={{
+        ...cardBase,
+        justifyContent: 'space-between',
+        background: 'rgba(239,68,68,0.07)',
+        border: '1px solid rgba(239,68,68,0.18)',
+      }}>
         <span style={{ color: '#EF4444', fontSize: 13 }}>Delete this entry?</span>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => setDeleting(false)} style={cancelBtnStyle}>Cancel</button>
-          <button onClick={() => onDelete(entry.id)} style={deleteBtnStyle}>Delete</button>
+          <button onClick={() => setDeleting(false)} style={cancelBtn}>Cancel</button>
+          <button onClick={() => onDelete(entry.id)} style={deleteBtn}>Delete</button>
         </div>
       </div>
     )
@@ -67,7 +61,7 @@ function EntryCard({
 
   return (
     <div
-      className="entry-card animate-fade-in"
+      className="animate-fade-in"
       style={{
         animationDelay: `${index * 50}ms`,
         transform: `translateX(${swipeX}px)`,
@@ -77,138 +71,138 @@ function EntryCard({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      <CardContent entry={entry} onUpdate={onUpdate} />
+      <CardContent entry={entry} />
     </div>
   )
 }
 
-function CardContent({ entry, onUpdate }: { entry: Entry; onUpdate: (e: Entry) => void }) {
+function CardContent({ entry }: { entry: Entry }) {
   const { domain, data, created_at } = entry
 
   if (domain === 'training') {
     const d = data as TrainingData
-    const zoneColor = d.zone === 'zone1' ? '#00F0B5' : d.zone === 'zone2' ? '#F59E0B' : '#EF4444'
+    const c = '#FF3B30'
     const zoneLabel = d.zone === 'zone1' ? 'Z1' : d.zone === 'zone2' ? 'Z2' : 'HIT'
-    const zoneRgb = d.zone === 'zone1' ? '0,240,181' : d.zone === 'zone2' ? '245,158,11' : '239,68,68'
+    const meta = [
+      d.duration_min && `${d.duration_min} min`,
+      d.avg_hr && `${d.avg_hr} bpm`,
+      d.calories_burned && `${d.calories_burned} kcal`,
+    ].filter(Boolean).join(' · ') || `RPE ${d.rpe}`
     return (
-      <div style={cardStyle}>
-        <div style={iconWrap('rgba(0,240,181,0.08)', 'rgba(0,240,181,0.14)')}>
-          <Dumbbell size={15} color="#00F0B5" />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
-            <span style={titleStyle}>{d.type.charAt(0).toUpperCase() + d.type.slice(1)}</span>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: `rgba(${zoneRgb},0.12)`, color: zoneColor, letterSpacing: '0.04em' }}>
-              {zoneLabel}
-            </span>
-          </div>
-          <div style={subStyle}>{d.duration_min}min{d.avg_hr ? ` · ${d.avg_hr}bpm` : ''} · RPE {d.rpe}</div>
-        </div>
-        <span style={timeStyle}>{formatTime(created_at)}</span>
-      </div>
+      <FeedCard
+        color={c}
+        icon={<Flame size={17} color={c} strokeWidth={1.8} />}
+        title={d.type.charAt(0).toUpperCase() + d.type.slice(1)}
+        meta={meta}
+        tags={[zoneLabel, `RPE ${d.rpe}`]}
+        time={formatTime(created_at)}
+      />
     )
   }
 
   if (domain === 'nutrition') {
     const d = data as NutritionData
+    const c = '#F59E0B'
     return (
-      <div style={cardStyle}>
-        <div style={iconWrap('rgba(245,158,11,0.08)', 'rgba(245,158,11,0.14)')}>
-          <Drumstick size={15} color="#F59E0B" />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <span style={titleStyle}>{d.meal.charAt(0).toUpperCase() + d.meal.slice(1)}</span>
-          <div style={subStyle}>
-            <span style={{ color: '#00F0B5', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{d.protein_g}g</span>
-            {' '}protein
-            {d.calories ? <span style={{ color: '#A78BFA', fontFamily: 'JetBrains Mono, monospace' }}> · {d.calories}kcal</span> : null}
-            {' · '}{d.quality}
-          </div>
-        </div>
-        <span style={timeStyle}>{formatTime(created_at)}</span>
-      </div>
+      <FeedCard
+        color={c}
+        icon={<Leaf size={17} color={c} strokeWidth={1.8} />}
+        title={d.meal.charAt(0).toUpperCase() + d.meal.slice(1)}
+        meta={d.description || d.quality}
+        tags={[`${d.protein_g}g P`]}
+        time={formatTime(created_at)}
+      />
     )
   }
 
-  if (domain === 'task') {
-    const d = data as TaskData
-    function handleToggle() {
-      const updated = { ...entry, data: { ...d, completed: !d.completed } }
-      onUpdate(updated)
-      if (d.gcal_event_id) {
-        updateCalendarEvent(d.gcal_event_id, { ...d, completed: !d.completed }, entry.date ?? getTodayISO()).catch(() => {})
-      }
-    }
+  if (domain === 'strength') {
+    const d = data as StrengthData
+    const c = '#6366F1'
+    const exerciseNames = d.exercises.map(e => e.name).filter(Boolean).join(', ')
+    const totalSets = d.exercises.reduce((s, e) => s + e.sets, 0)
     return (
-      <div style={cardStyle}>
-        <button
-          onClick={handleToggle}
-          style={{
-            width: 26, height: 26, borderRadius: 8, flexShrink: 0, border: 'none',
-            background: d.completed ? '#00F0B5' : 'rgba(255,255,255,0.07)',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          {d.completed && <Check size={13} color="#080810" strokeWidth={3} />}
-        </button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ ...titleStyle, textDecoration: d.completed ? 'line-through' : 'none', color: d.completed ? '#44445A' : '#F0F0F5' }}>
-            {d.description}
-          </span>
-          <div style={{ ...subStyle, display: 'flex', alignItems: 'center', gap: 6 }}>
-            {d.category} · {d.priority}
-            {d.gcal_event_id && <Calendar size={10} color="#60A5FA" />}
-          </div>
-        </div>
-        <span style={timeStyle}>{formatTime(created_at)}</span>
-      </div>
-    )
-  }
-
-  if (domain === 'habit') {
-    const d = data as HabitData
-    return (
-      <div style={cardStyle}>
-        <div style={iconWrap('rgba(167,139,250,0.08)', 'rgba(167,139,250,0.14)')}>
-          <RotateCcw size={15} color="#A78BFA" />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ ...titleStyle, color: d.completed ? '#F0F0F5' : '#44445A' }}>{d.habit_name}</span>
-          <div style={subStyle}>{d.completed ? '✓ Done' : 'Not done'}</div>
-        </div>
-        <span style={timeStyle}>{formatTime(created_at)}</span>
-      </div>
+      <FeedCard
+        color={c}
+        icon={<Dumbbell size={17} color={c} strokeWidth={1.8} />}
+        title={`${d.exercises.length} lift${d.exercises.length !== 1 ? 's' : ''}`}
+        meta={exerciseNames || 'Strength session'}
+        tags={[`${totalSets} sets`]}
+        time={formatTime(created_at)}
+      />
     )
   }
 
   return null
 }
 
-const cardStyle: React.CSSProperties = {
+function FeedCard({ color, icon, title, meta, tags, time }: {
+  color: string
+  icon: React.ReactNode
+  title: string
+  meta: string
+  tags: string[]
+  time: string
+}) {
+  return (
+    <div style={cardBase}>
+      {/* Domain icon */}
+      <div style={{
+        width: 36, height: 36, borderRadius: 12,
+        background: `${color}14`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        {icon}
+      </div>
+
+      {/* Text */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Row 1: title + time */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+          <span style={{
+            fontSize: 13, fontWeight: 600, color: '#F0F0F5',
+            letterSpacing: '-0.01em',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {title}
+          </span>
+          <span className="font-data" style={{ fontSize: 10.5, color: '#8A8A99', flexShrink: 0 }}>{time}</span>
+        </div>
+
+        {/* Row 2: meta + tags */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 3, gap: 8 }}>
+          <span style={{
+            fontSize: 11.5, color: '#8A8A99',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {meta}
+          </span>
+          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+            {tags.map(t => (
+              <span key={t} className="font-data" style={{
+                fontSize: 9.5, padding: '2px 6px', borderRadius: 6,
+                background: `${color}14`, color, fontWeight: 600, letterSpacing: '0.02em',
+              }}>{t}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const cardBase: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 12,
   background: 'rgba(255,255,255,0.035)',
   border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: 14,
   padding: '12px 14px',
 }
-const titleStyle: React.CSSProperties = { fontSize: 14, fontWeight: 600, color: '#F0F0F5', display: 'block' }
-const subStyle: React.CSSProperties = { fontSize: 12, color: '#44445A', marginTop: 2 }
-const timeStyle: React.CSSProperties = {
-  fontSize: 11, color: '#33334A', whiteSpace: 'nowrap', flexShrink: 0,
-  fontFamily: 'JetBrains Mono, monospace',
-}
-const cancelBtnStyle: React.CSSProperties = {
+const cancelBtn: React.CSSProperties = {
   background: 'rgba(255,255,255,0.06)', color: '#888',
   borderRadius: 8, padding: '6px 12px', fontSize: 12, border: 'none', cursor: 'pointer',
 }
-const deleteBtnStyle: React.CSSProperties = {
+const deleteBtn: React.CSSProperties = {
   background: '#EF4444', color: '#fff',
   borderRadius: 8, padding: '6px 12px', fontSize: 12, border: 'none', cursor: 'pointer', fontWeight: 700,
-}
-function iconWrap(bg: string, border: string): React.CSSProperties {
-  return {
-    width: 32, height: 32, borderRadius: 10, background: bg, border: `1px solid ${border}`,
-    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  }
 }

@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { getCoachCache, setCoachCache } from '@/lib/db'
 import { getCoachCacheKey } from '@/lib/utils'
-import type { Entry, Settings, CoachResponse, CoachSession } from '@/types'
+import type { Entry, Settings, CoachResponse, CoachSession, Goal, BodyStats } from '@/types'
 
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000
 
@@ -11,6 +11,9 @@ export async function fetchCoachRecommendations(
   settings: Settings,
   session: CoachSession,
   date: string,
+  strengthEntries: Entry[],
+  goals: Goal[],
+  bodyStats: BodyStats,
   forceRefresh = false,
 ): Promise<CoachResponse> {
   const cacheKey = getCoachCacheKey(date, session)
@@ -19,7 +22,6 @@ export async function fetchCoachRecommendations(
     const cached = await getCoachCache(cacheKey)
     if (cached) return cached.response
   } else {
-    // Rate-limit manual refresh: only allow if last call was >2 hours ago
     const cached = await getCoachCache(cacheKey)
     if (cached && Date.now() - cached.cachedAt < TWO_HOURS_MS) {
       return cached.response
@@ -30,6 +32,9 @@ export async function fetchCoachRecommendations(
     body: {
       today_entries: todayEntries,
       week_entries: weekEntries,
+      strength_entries: strengthEntries,
+      goals,
+      body_stats: bodyStats,
       settings,
       session,
     },

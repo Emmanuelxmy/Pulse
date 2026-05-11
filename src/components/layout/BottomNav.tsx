@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Brain, CalendarDays, BarChart2, Settings } from 'lucide-react'
+import { Home, Brain, Settings } from 'lucide-react'
+
+const RED = '#FF3B30'
 
 const tabs = [
-  { to: '/',          label: 'Today',    Icon: Home },
-  { to: '/coach',     label: 'Coach',    Icon: Brain },
-  { to: '/calendar',  label: 'Calendar', Icon: CalendarDays },
-  { to: '/dashboard', label: 'Stats',    Icon: BarChart2 },
-  { to: '/settings',  label: 'Settings', Icon: Settings },
+  { to: '/',         label: 'Today',    Icon: Home },
+  { to: '/coach',    label: 'Coach',    Icon: Brain },
+  { to: '/settings', label: 'Settings', Icon: Settings },
 ]
 
 export default function BottomNav() {
@@ -40,13 +40,13 @@ export default function BottomNav() {
             flexDirection: 'column',
             alignItems: 'center',
             gap: 3,
-            padding: '8px 13px',
+            padding: '8px 20px',
             borderRadius: 99,
-            background: isActive ? 'rgba(0, 240, 181, 0.13)' : 'transparent',
-            color: isActive ? '#00F0B5' : '#44445A',
+            background: isActive ? `rgba(255, 59, 48, 0.13)` : 'transparent',
+            color: isActive ? RED : '#44445A',
             textDecoration: 'none',
             transition: 'all 0.18s ease',
-            minWidth: 50,
+            minWidth: 60,
           })}
         >
           {({ isActive }) => (

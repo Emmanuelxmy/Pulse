@@ -84,7 +84,7 @@ export async function sendTestNotification(): Promise<void> {
     },
     body: JSON.stringify({
       subscription: sub.toJSON(),
-      title: '✦ Pulse',
+      title: '✦ Coach',
       body: 'Notifications are working!',
       url: '/',
     }),
@@ -94,15 +94,13 @@ export async function sendTestNotification(): Promise<void> {
 
 // ── Notification preferences type ────────────────────────
 export interface NotificationPrefs {
-  morning: boolean       // 7 AM brief reminder
-  evening: boolean       // 7 PM brief reminder
-  habits: boolean        // 9 PM habit check
-  protein: boolean       // noon protein check
+  morning: boolean
+  evening: boolean
+  protein: boolean
 }
 
 export const DEFAULT_NOTIF_PREFS: NotificationPrefs = {
   morning: true,
   evening: true,
-  habits: true,
   protein: false,
 }
