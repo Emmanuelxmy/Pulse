@@ -86,7 +86,6 @@ function CardContent({ entry }: { entry: Entry }) {
     const meta = [
       d.duration_min && `${d.duration_min} min`,
       d.avg_hr && `${d.avg_hr} bpm`,
-      d.calories_burned && `${d.calories_burned} kcal`,
     ].filter(Boolean).join(' · ') || `RPE ${d.rpe}`
     return (
       <FeedCard
@@ -108,7 +107,7 @@ function CardContent({ entry }: { entry: Entry }) {
         color={c}
         icon={<Leaf size={17} color={c} strokeWidth={1.8} />}
         title={d.meal.charAt(0).toUpperCase() + d.meal.slice(1)}
-        meta={d.description || d.quality}
+        meta={d.notes || d.quality}
         tags={[`${d.protein_g}g P`]}
         time={formatTime(created_at)}
       />
