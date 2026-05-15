@@ -43,23 +43,26 @@ export default function TodayView({ settings }: { settings: Settings }) {
   }
   const zoneSplit = calcZoneSplit(weekEntries)
 
-  const RING = 112
-  const R = 50
-  const circumference = 2 * Math.PI * R
-  const offset = circumference - (stats.progress / 100) * circumference
-
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   const proteinPct = Math.min((stats.protein / settings.protein_target_g) * 100, 100)
-  const setsTarget = settings.sessions_per_week_target * 6
 
   const calTarget = settings.calorie_target ?? 2650
   const calMaintenance = settings.calorie_maintenance ?? 3100
   const cals = stats.totalCalories
   const calPct = Math.min((cals / calMaintenance) * 100, 100)
   const calColor = cals > calMaintenance ? '#EF4444' : cals > calTarget ? '#F97316' : '#10B981'
+
+  // Ring is nutrition-only: average of protein% and calorie% toward cut target
+  const calTowardTarget = Math.min((cals / calTarget) * 100, 100)
+  const nutritionProgress = Math.round((proteinPct + calTowardTarget) / 2)
+
+  const RING = 112
+  const R = 50
+  const circumference = 2 * Math.PI * R
+  const offset = circumference - (nutritionProgress / 100) * circumference
 
   async function handleAddTraining(data: TrainingData) { await add('training', data) }
   async function handleAddNutrition(data: NutritionData) { await add('nutrition', data) }
@@ -113,7 +116,7 @@ export default function TodayView({ settings }: { settings: Settings }) {
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           }}>
             <span className="font-data" style={{ fontSize: 30, fontWeight: 700, color: '#F0F0F5', lineHeight: 1, letterSpacing: '-0.02em' }}>
-              {stats.progress}<span style={{ fontSize: 16, color: '#8A8A99' }}>%</span>
+              {nutritionProgress}<span style={{ fontSize: 16, color: '#8A8A99' }}>%</span>
             </span>
             <span style={{ fontSize: 10, color: '#44445A', marginTop: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               done
@@ -168,15 +171,6 @@ export default function TodayView({ settings }: { settings: Settings }) {
             )}
           </div>
 
-          <StatRow label="Sessions">
-            <span style={{ color: RED }}>{stats.trainingSessions}</span>
-            <span style={{ color: '#2A2A38' }}> / {settings.sessions_per_week_target}</span>
-          </StatRow>
-
-          <StatRow label="Strength sets">
-            <span style={{ color: '#6366F1' }}>{stats.strengthSets}</span>
-            <span style={{ color: '#2A2A38' }}> / {setsTarget}</span>
-          </StatRow>
         </div>
       </div>
 
@@ -230,16 +224,6 @@ export default function TodayView({ settings }: { settings: Settings }) {
   )
 }
 
-function StatRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span style={{ fontSize: 10.5, color: '#44445A', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-        {label}
-      </span>
-      <span className="font-data" style={{ fontSize: 12.5, letterSpacing: '-0.01em' }}>{children}</span>
-    </div>
-  )
-}
 
 const glass: React.CSSProperties = {
   background: 'rgba(255,255,255,0.04)',
