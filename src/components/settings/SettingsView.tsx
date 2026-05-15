@@ -498,6 +498,29 @@ export default function SettingsView({ settings, onUpdate }: Props) {
               ),
             },
             {
+              label: 'Calories',
+              val: `${settings.calorie_target ?? 2650} cut · ${settings.calorie_maintenance ?? 3100} maintenance`,
+              icon: <Flame size={14} color="#F97316" />,
+              sub: (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
+                  <div>
+                    <p style={{ ...labelStyle, marginBottom: 3, color: '#10B981' }}>Cut goal (kcal)</p>
+                    <input type="number" value={settings.calorie_target ?? 2650}
+                      onChange={e => onUpdate({ calorie_target: Number(e.target.value) })}
+                      style={{ ...inputStyle, padding: '8px 10px', fontSize: 13 }}
+                    />
+                  </div>
+                  <div>
+                    <p style={{ ...labelStyle, marginBottom: 3, color: '#EF4444' }}>Maintenance (kcal)</p>
+                    <input type="number" value={settings.calorie_maintenance ?? 3100}
+                      onChange={e => onUpdate({ calorie_maintenance: Number(e.target.value) })}
+                      style={{ ...inputStyle, padding: '8px 10px', fontSize: 13 }}
+                    />
+                  </div>
+                </div>
+              ),
+            },
+            {
               label: 'Sessions / week',
               val: `${settings.sessions_per_week_target}`,
               icon: <Target size={14} />,

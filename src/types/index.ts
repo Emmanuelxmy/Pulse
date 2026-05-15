@@ -114,6 +114,8 @@ export interface Settings {
   zone2_ceiling_hr: number
   hit_floor_hr: number
   protein_target_g: number
+  calorie_target: number       // cut / goal calories
+  calorie_maintenance: number  // maintenance calories (bar turns red above this)
   training_phase: PhaseType
   sessions_per_week_target: number
   polarized_ratio: [number, number]
@@ -128,6 +130,8 @@ export const DEFAULT_SETTINGS: Settings = {
   zone2_ceiling_hr: 165,
   hit_floor_hr: 165,
   protein_target_g: 140,
+  calorie_target: 2650,
+  calorie_maintenance: 3100,
   training_phase: 'phase1',
   sessions_per_week_target: 3,
   polarized_ratio: [80, 20],

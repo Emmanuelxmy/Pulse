@@ -55,6 +55,12 @@ export default function TodayView({ settings }: { settings: Settings }) {
   const proteinPct = Math.min((stats.protein / settings.protein_target_g) * 100, 100)
   const setsTarget = settings.sessions_per_week_target * 6
 
+  const calTarget = settings.calorie_target ?? 2650
+  const calMaintenance = settings.calorie_maintenance ?? 3100
+  const cals = stats.totalCalories
+  const calPct = Math.min((cals / calMaintenance) * 100, 100)
+  const calColor = cals > calMaintenance ? '#EF4444' : cals > calTarget ? '#F97316' : '#10B981'
+
   async function handleAddTraining(data: TrainingData) { await add('training', data) }
   async function handleAddNutrition(data: NutritionData) { await add('nutrition', data) }
   async function handleAddStrength(data: StrengthData) { await add('strength', data) }
@@ -134,6 +140,32 @@ export default function TodayView({ settings }: { settings: Settings }) {
                 transition: 'width 0.5s ease',
               }} />
             </div>
+          </div>
+
+          {/* Calories bar */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+              <span style={{ fontSize: 10.5, color: '#44445A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Calories</span>
+              <span className="font-data" style={{ fontSize: 12, letterSpacing: '-0.01em' }}>
+                <span style={{ color: calColor }}>{cals}</span>
+                <span style={{ color: '#2A2A38' }}> / {calTarget}</span>
+              </span>
+            </div>
+            <div style={{ height: 5, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%', borderRadius: 99, width: `${calPct}%`,
+                background: `linear-gradient(90deg, ${calColor}cc, ${calColor})`,
+                boxShadow: cals > 0 ? `0 0 8px ${calColor}55` : 'none',
+                transition: 'width 0.5s ease, background 0.3s ease',
+              }} />
+            </div>
+            {cals > calTarget && (
+              <p style={{ fontSize: 9.5, color: calColor, marginTop: 3, fontFamily: 'JetBrains Mono, monospace' }}>
+                {cals > calMaintenance
+                  ? `+${cals - calMaintenance} over maintenance`
+                  : `+${cals - calTarget} over cut`}
+              </p>
+            )}
           </div>
 
           <StatRow label="Sessions">
