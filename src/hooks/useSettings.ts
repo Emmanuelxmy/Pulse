@@ -10,15 +10,13 @@ export function useSettings() {
 
   useEffect(() => {
     async function load() {
-      // Try local first for instant load
       const local = await getSettings()
-      if (local) setSettings(local)
+      if (local) setSettings({ ...DEFAULT_SETTINGS, ...local })
       setLoading(false)
-      // Then sync from Supabase if online
       if (navigator.onLine) {
         try {
           const remote = await syncSettings()
-          setSettings(remote)
+          setSettings({ ...DEFAULT_SETTINGS, ...remote })
         } catch {}
       }
     }

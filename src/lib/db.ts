@@ -1,5 +1,5 @@
 import { openDB, type IDBPDatabase } from 'idb'
-import type { Entry, CoachCacheEntry, Settings, DomainType } from '@/types'
+import type { Entry, Settings, DomainType } from '@/types'
 
 const DB_NAME = 'coach-db'
 const DB_VERSION = 2
@@ -12,7 +12,7 @@ type PulseDB = {
   }
   coach_cache: {
     key: string
-    value: CoachCacheEntry
+    value: { key: string; [k: string]: unknown }
   }
   settings_cache: {
     key: string
@@ -81,16 +81,6 @@ export async function markEntrySynced(id: string): Promise<void> {
     entry.synced = true
     await db.put('entries', entry)
   }
-}
-
-export async function getCoachCache(key: string): Promise<CoachCacheEntry | undefined> {
-  const db = await getDB()
-  return db.get('coach_cache', key)
-}
-
-export async function setCoachCache(entry: CoachCacheEntry): Promise<void> {
-  const db = await getDB()
-  await db.put('coach_cache', entry)
 }
 
 export async function getSettings(): Promise<Settings | null> {
